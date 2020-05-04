@@ -30,21 +30,21 @@ contract EviFactory is ChainlinkClient{
 
     InsurancePackage memory pack1;
     pack1.name = "Silver";
-    pack1.priceUSD = 1000;
+    pack1.priceUSD = 10;
     pack1.rate = 25;
     insurancePackage["Silver"] = pack1;
     allPackage.push(pack1);
 
     InsurancePackage memory pack2;
     pack2.name = "Gold";
-    pack2.priceUSD = 5000;
+    pack2.priceUSD = 50;
     pack2.rate = 60;
     insurancePackage["Gold"] = pack2;
     allPackage.push(pack2);
 
     InsurancePackage memory pack3;
     pack3.name = "Platinum";
-    pack3.priceUSD = 10000;
+    pack3.priceUSD = 100;
     pack3.rate = 100;
     insurancePackage["Platinum"] = pack3;
     allPackage.push(pack3);
