@@ -1,7 +1,7 @@
 const List = [
   {
     type: 'Silver',
-    price: 1000,
+    price: 10,
     compensation: 2250,
     rate: 25,
     description: 'The total amount of compensation is up to $2250 \n',
@@ -11,7 +11,7 @@ const List = [
   },
   {
     type: 'Gold',
-    price: 5000,
+    price: 50,
     compensation: 13000,
     rate: 60,
     description: 'The total amount of compensation is up to $13000 \n',
@@ -21,7 +21,7 @@ const List = [
   },
   {
     type: 'Platinum',
-    price: 10000,
+    price: 100,
     compensation: 30000,
     rate: 100,
     description: 'The total amount of compensation is up to $30000 \n',

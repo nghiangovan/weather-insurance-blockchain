@@ -11,7 +11,7 @@ const state = {
   insurances: [],
   customers: [],
   manager: null,
-  eviesByAdmin: []
+  eviesByAdmin: [],
 };
 
 const mutations = {
@@ -37,7 +37,7 @@ const mutations = {
   },
   setAdminEvies(state, payload) {
     state.setAdminEvies = payload.setAdminEvies;
-  }
+  },
 };
 
 const actions = {
@@ -46,7 +46,9 @@ const actions = {
     const accounts = await web3.eth.getAccounts();
     window.web3.version.getNetwork((e, netId) => {
       if (netId !== '3') {
-        alert('Unknown network, please change network to Ropsten testnet network');
+        alert(
+          'Unknown network, please change network to Ropsten testnet network'
+        );
         return;
       }
     });
@@ -63,9 +65,13 @@ const actions = {
   async initContarct({ commit, state }) {
     const web3 = await state.web3();
     const networkId = process.env.VUE_APP_NETWORK_ID;
-    const factory = new web3.eth.Contract(Factory.abi, Factory.networks[networkId].address, {
-      transactionConfirmationBlocks: 1
-    });
+    const factory = new web3.eth.Contract(
+      Factory.abi,
+      Factory.networks[networkId].address,
+      {
+        transactionConfirmationBlocks: 1,
+      }
+    );
     let manager = await factory.methods.manager().call();
     let factoryFunc = () => factory;
     commit('setFactory', { factoryFunc });
@@ -76,16 +82,18 @@ const actions = {
     const factory = await state.factory();
     const account = await state.account;
     const web3 = await state.web3();
-    let eviAddresses = await factory.methods.getAllContract(account).call({ from: account });
+    let eviAddresses = await factory.methods
+      .getAllContract(account)
+      .call({ from: account });
     let evies = [];
     for (let i = 0; i < eviAddresses.length; i++) {
       let evi = {
         instance: null,
-        address: null
+        address: null,
       };
 
       evi.instance = new web3.eth.Contract(Evi.abi, eviAddresses[i], {
-        transactionConfirmationBlocks: 1
+        transactionConfirmationBlocks: 1,
       });
 
       evi.address = eviAddresses[i];
@@ -97,6 +105,7 @@ const actions = {
   async createEvi({ state }, param) {
     const factory = await state.factory();
     const account = await state.account;
+    // console.log("param", param);
 
     await factory.methods
       .createEvi(
@@ -119,14 +128,18 @@ const actions = {
   async getAllInsurancePackage({ commit, state }) {
     const factory = await state.factory();
     const account = await state.account;
-    let insurances = await factory.methods.getAllInsurancePackage().call({ from: account });
+    let insurances = await factory.methods
+      .getAllInsurancePackage()
+      .call({ from: account });
     commit('setInsurances', { insurances });
     console.log(insurances);
   },
   async getAllCustomers({ commit, state }) {
     const factory = await state.factory();
     const account = await state.account;
-    let customers = await factory.methods.getAllCustomer().call({ from: account });
+    let customers = await factory.methods
+      .getAllCustomer()
+      .call({ from: account });
     commit('setCustomers', { customers });
     console.log(customers);
   },
@@ -148,16 +161,18 @@ const actions = {
     const factory = await state.factory();
     const account = await state.account;
     const web3 = await state.web3();
-    let eviAddresses = await factory.methods.getAllCustomer().call({ from: account });
+    let eviAddresses = await factory.methods
+      .getAllCustomer()
+      .call({ from: account });
     let eviesByAdmin = [];
     for (let i = 0; i < eviAddresses.length; i++) {
       let evi = {
         instance: null,
-        address: null
+        address: null,
       };
 
       evi.instance = new web3.eth.Contract(Evi.abi, eviAddresses[i], {
-        transactionConfirmationBlocks: 1
+        transactionConfirmationBlocks: 1,
       });
       console.log(evi.instance);
       // let paid = await evi.instance.methods.price().call({ from: account });
@@ -169,7 +184,7 @@ const actions = {
       // }
     }
     commit('setAdminEvies', { eviesByAdmin });
-  }
+  },
 };
 
 const getters = {};
@@ -179,5 +194,5 @@ export const contract = {
   state,
   getters,
   mutations,
-  actions
+  actions,
 };
