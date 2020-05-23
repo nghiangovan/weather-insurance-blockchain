@@ -3,8 +3,13 @@ pragma experimental ABIEncoderV2;
 
 import "https://github.com/smartcontractkit/chainlink/blob/develop/evm-contracts/src/v0.5/ChainlinkClient.sol";
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v2.5.0/contracts/math/SafeMath.sol";
+import "Strings.sol";
+import "Integers.sol";
 
 contract Evi is ChainlinkClient {
+  using Strings for string;
+  using Integers for uint;
+    
   uint constant SECONDS_PER_DAY = 24 * 60 * 60;
   uint constant SECONDS_PER_HOUR = 60 * 60;
   int constant OFFSET19700101 = 2440588;
@@ -29,6 +34,11 @@ contract Evi is ChainlinkClient {
   uint256 public price;
   uint256 public rate;
   uint256 public linkAmount;
+  uint public year;
+  uint public month;
+  uint public day;
+  uint public hour;
+  uint public expired;
 
   uint256 public totalRainyHours;
   uint256 public deploymentTime;
@@ -52,46 +62,51 @@ contract Evi is ChainlinkClient {
 
   uint256 public payment;
 
-//   constructor(
-//     address payable _buyer,
-//     string memory _location,
-//     string memory _date,
-// 	string memory _times,
-//     uint256  _price,
-//     uint256  _rate,
-//     uint256 _linkAmount,
-//     address _link,
-//     address payable _manager) public payable {
+  constructor(
+    address payable _buyer,
+    string memory _location,
+    string memory _date,
+	string memory _times,
+    uint256  _price,
+    uint256  _rate,
+    uint256 _linkAmount,
+    address _link,
+    address payable _manager) public payable {
 
-//     buyer = _buyer;
-//     location = _location;
-//     date = _date;
-//     price = _price;
-// 	rate = _rate;
-//     linkAmount = _linkAmount;
-//     manager = _manager;
+    buyer = _buyer;
+    location = _location;
+    date = _date;
+    price = _price;
+	rate = _rate;
+    linkAmount = _linkAmount;
+    manager = _manager;
 
-//     bytes memory timesbyte = bytes(_times);
-//     for(uint i; i<24; i++){
-//       if(timesbyte[i] == "1") {
-//         times.push(tempTimes[i]);
-//       }
-//     }
+    bytes memory timesbyte = bytes(_times);
+    for(uint i; i<24; i++){
+      if(timesbyte[i] == "1") {
+        times.push(tempTimes[i]);
+        hour = i;
+      }
+    }
+    
+    timeString = _times;
+    
+    hour++;
+    convertDateToArrayInt();
+    expired = timestampFromDateTime(year, month, day, hour);
 
-//     timeString = _times;
+    deploymentTime = block.timestamp;
 
-//     deploymentTime = block.timestamp;
+    if (_link == address(0)) {
+      setPublicChainlinkToken();
+      payment = 1 * LINK;
+    } else {
+      setChainlinkToken(_link);
+      payment = 1;
+    }
 
-//     if (_link == address(0)) {
-//       setPublicChainlinkToken();
-//       payment = 1 * LINK;
-//     } else {
-//       setChainlinkToken(_link);
-//       payment = 1;
-//     }
-
-//     setChainlinkOracle(ORACLE_WEATHER);
-//   }
+    setChainlinkOracle(ORACLE_WEATHER);
+  }
 
   modifier buyerContract(){
     require(address(this) == msg.sender || buyer == msg.sender,"Unauthorised , must be buyer");
@@ -103,43 +118,34 @@ contract Evi is ChainlinkClient {
 	_;
   }
   
-  function _daysFromDate(uint year, uint month, uint day) internal pure returns (uint _days) {
-    require(year >= 1970);
-    int _year = int(year);
-    int _month = int(month);
-    int _day = int(day);
+  function _daysFromDate(uint _year, uint _month, uint _day) internal pure returns (uint _days) {
+    require(_year >= 1970);
+    int _year_ = int(_year);
+    int _month_ = int(_month);
+    int _day_ = int(_day);
 
-    int __days = _day
+    int __days = _day_
       - 32075
-      + 1461 * (_year + 4800 + (_month - 14) / 12) / 4
-      + 367 * (_month - 2 - (_month - 14) / 12 * 12) / 12
-      - 3 * ((_year + 4900 + (_month - 14) / 12) / 100) / 4
+      + 1461 * (_year_ + 4800 + (_month_ - 14) / 12) / 4
+      + 367 * (_month_ - 2 - (_month_ - 14) / 12 * 12) / 12
+      - 3 * ((_year_ + 4900 + (_month_ - 14) / 12) / 100) / 4
       - OFFSET19700101;
 
     _days = uint(__days);
   }
   
-  function timestampFromDateTime(uint year, uint month, uint day, uint hour) public pure returns (uint timestamp) {
-    timestamp = _daysFromDate(year, month, day) * SECONDS_PER_DAY + hour * SECONDS_PER_HOUR;
+  function timestampFromDateTime(uint _year, uint _month, uint _day, uint _hour) public pure returns (uint _timestamp) {
+    _timestamp = _daysFromDate(_year, _month, _day) * SECONDS_PER_DAY + _hour * SECONDS_PER_HOUR;
   }
   
-  function stringToUint(string memory s) public pure  returns (uint result){
-        bytes memory b = bytes(s);
-        uint i;
-        result = 0;
-        for (i = 0; i < b.length; i++) {
-            uint c = uint(uint8(b[i]));
-            if (c >= 48 && c <= 57) {
-                result = result * 10 + (c - 48);
-            }
-        }
-    }
     
-    function getYear() public returns(string memory) {
-        date = "2020-05-13";
-        bytes memory bytesYear;
-        bytes memory bytesDate = bytes(date);
-    }
+  function convertDateToArrayInt() internal {
+    string memory dateStr = "2020-05-13";
+    string[] memory arrStr = dateStr.split("-");
+    year = Integers.parseInt(arrStr[0]);
+    month = Integers.parseInt(arrStr[1]);
+    day = Integers.parseInt(arrStr[2]);
+  }
 
   function queryPrice() public {
     Chainlink.Request memory req = buildChainlinkRequest(JOB_ID_PRICE, address(this), this.fulfillPrice.selector);
@@ -156,8 +162,7 @@ contract Evi is ChainlinkClient {
   }
 
   function queryWeather() public {
-    require(paid == false);
-    require(isQueryWeather == false);
+    require(paid == false && isQueryWeather == false && now > expired);
     uint arrayLength = times.length;
     for (uint i=0; i<arrayLength; i++) {
       Chainlink.Request memory req = buildChainlinkRequest(JOB_ID_WEATHER, address(this), this.fulfillWeather.selector);
@@ -217,10 +222,16 @@ contract Evi is ChainlinkClient {
 	return address(this).balance;
   }
   
+  function getDateNow() public view returns (bool){
+	return now > expired;
+  }
+  
   function getChainlinkToken() public view returns (uint256) {
     LinkTokenInterface link = LinkTokenInterface(chainlinkTokenAddress());
     return link.balanceOf(address(this));   
   }
+  
+  
 
   function() external payable {}
 }
